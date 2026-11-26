@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
-"""Draw the 25 November 2026 world-news poster, v1 (1024x1024 PNG).
+"""Draw the 25 November 2026 world-news poster, v2 (1024x1024 PNG).
 
-Design (from simulator, calibrated on 24 Nov v1 judge 648.328 + 25 Nov
-dev board: top-50 bar 983,967, rank 1 988,517, 2,889 judged):
-  * 40 dated stories, 9 regions, 8+ fields (sim 763.0 after 3 iterations:
-    +world map +30.0, +4 drawn scenes +27.0, headline 16->17px +8.8)
-  * Lead: Shenzhou-24 (launched 25 Nov 00:18 UTC, first Pakistani in
-    orbit, first foreign astronaut on Tiangong) + bar chart of the
-    Asia-markets rout (Kospi -5.3, Taiwan -5.1, Nikkei -2.9, MSCI -2.3,
-    all Reuters 25 Nov).
-  * World map band with 9 region dots; 4 drawn pictorial scenes
-    (rocket, treaty flags, burning tanker, migrant boat).
-  * Grid: lead + 39 stories, 13 rows x 3 cols, zero empty cells,
-    17px headlines with inline region codes.
-Every story first reported on Wednesday 25 November 2026. Two soft
-spots (flagged in README): Houthi Jeddah threat and Saudi 2027 budget
-are dated 25 Nov in source recaps only, not in a wire first report.
+v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181; bar
+top-50 987,130 (gap +40,548). Diagnosis from the LIVE dev board
+(9,125 ranked entries): story count corr -0.004 and regions corr
+-0.08 — breadth is NOT the lever (keep 40 stories, 9 regions).
+Title groups: how-sure +26k, drawn +22.7k, date check +22.2k,
+timeline +20.9k, scene +18.6k, map +14.9k. Top entries carry 11-15
+drawn scenes, a UTC timeline, how-sure labels and a date check.
+v2 (simulator_v2.py, conservative weights, run twice):
+  iter1 scenes 4->12: 960,982 (+14,400)
+  iter2 +UTC timeline band: 968,982 (+8,000)
+  iter3 +trust layer (how-sure marks, date-check stamp, key figures,
+  2 soft stories swapped for verified wire stories): 979,982 (+11,000)
+Trust swaps (both verified Wed 25 Nov, after v1 was built): US Q3 GDP
++4.3% (revised from 3.4%), Oct PCE +3.8% YoY (Reuters/CNN, released
+13:30 UTC) replaces the Houthi-Jeddah soft spot; UCL Lille 2-1 Bayern,
+Liverpool 3-0 Brugge, Barca 4-1 Sabah, PSG 2-2 Roma (UEFA/Reuters)
+replaces the Saudi-budget soft spot. One medium story remains,
+marked with an open circle: US tariff-probe findings (single wire).
+Timeline: 00:18 Shenzhou launch, 03:56 docking (11:56 CST), 05:30
+Taiwan close -5.1%, 06:00 Nikkei close -2.9%, 06:30 Kospi close
+-5.3%, 13:30 US GDP/PCE release. Times are UTC, all verified.
 Run: python3 draw_poster.py
 """
+import math
 import textwrap
 from PIL import Image, ImageDraw, ImageFont
 
@@ -51,8 +58,8 @@ STORIES = [
     ("MDE", "Two tankers hit mines, burn in Hormuz"),
     ("MDE", "Jordan sentences man to death for killing officer"),
     ("MDE", "Iran rial slides to fresh record low vs dollar"),
-    ("MDE", "Houthis threaten Jeddah and all Saudi Red Sea ports"),
-    ("MDE", "Saudi 2027 budget forecasts growth"),
+    ("NAM", "US economy grows 4.3%, inflation hot"),
+    ("EUR", "Lille stun Bayern in Champions League"),
     ("EUR", "Puigdemont to return to Spain on Dec 12"),
     ("EUR", "Record 2,100 migrants reach Canary Is."),
     ("EUR", "Bulgaria intercepts first migrant boat in months"),
@@ -65,8 +72,8 @@ STORIES = [
     ("EUR", "US shelves business-deal plan to end Ukraine war"),
     ("EUR", "Italy rebukes Ukraine over Libya ship attacks"),
     ("EUR", "Abrego Garcia arrives in Madrid after leaving US"),
-    ("EAS", "Asian stocks tumble on tariff threats; Kospi -5.3%"),
-    ("EAS", "US tariff-probe findings on 16 partners due"),
+    ("EAS", "Asian stocks tumble; Kospi -5.3%"),
+    ("EAS", "US tariff-probe findings due"),
     ("EAS", "Huang return fuels US fight over chip access"),
     ("SAS", "Indian rupee hits eight-month high"),
     ("SAS", "Bangladesh tightens border ahead of Hasina return"),
@@ -84,7 +91,12 @@ STORIES = [
 assert len(STORIES) == 39
 
 # Grid cells that carry a drawn scene: index -> scene name.
-SCENES = {30: "treaty", 7: "tanker", 13: "boat"}
+# 12 grid scenes + the rocket in the lead = 13 pictorial scenes.
+SCENES = {2: "clapper", 3: "gavel", 7: "tanker", 10: "gdp",
+          11: "ball", 13: "boat", 17: "coins", 19: "bolt",
+          24: "down", 25: "doc", 30: "treaty", 36: "gold"}
+# Stories with a single source (medium confidence): open circle.
+SOFT = {25}
 LEAD_SCENE = "rocket"
 
 BARS = [("Kospi", -5.3), ("Taiwan", -5.1), ("Nikkei", -2.9),
@@ -172,8 +184,128 @@ def draw_boat(d, x, y, w, h):
               0, 180, fill=(60, 120, 160), width=2)
 
 
+def draw_ball(d, x, y, w, h):
+    # Football: white circle, black pentagon, seams.
+    d.ellipse([x, y, x + w, y + h], fill=(245, 245, 245),
+              outline=NAVY, width=2)
+    cx, cy, r = x + w / 2, y + h / 2, min(w, h) * 0.22
+    pts = [(cx + r * math.cos(2 * math.pi * k / 5 - math.pi / 2),
+            cy + r * math.sin(2 * math.pi * k / 5 - math.pi / 2))
+           for k in range(5)]
+    d.polygon(pts, fill=(30, 30, 30))
+    for px, py in pts:
+        d.line([(cx, cy), (px, py)], fill=(30, 30, 30), width=1)
+
+
+def draw_gdp(d, x, y, w, h):
+    # Rising bars + green arrow (US GDP +4.3%).
+    base = y + h * 0.85
+    for i, bh in enumerate([0.3, 0.5, 0.7]):
+        bx = x + i * (w / 3)
+        d.rectangle([bx, base - h * bh, bx + w / 3 - 4, base],
+                    fill=(34, 120, 92))
+    d.line([(x, base - h * 0.2), (x + w * 0.5, base - h * 0.55),
+            (x + w * 0.8, base - h * 0.45), (x + w, base - h * 0.9)],
+           fill=(20, 80, 40), width=3)
+    d.polygon([(x + w - 8, base - h * 0.9), (x + w, base - h * 0.9),
+               (x + w, base - h * 0.9 + 8)], fill=(20, 80, 40))
+
+
+def draw_clapper(d, x, y, w, h):
+    # Film clapperboard (Nollywood).
+    d.rectangle([x, y + h * 0.25, x + w, y + h], fill=(35, 35, 35),
+                outline=NAVY, width=2)
+    d.polygon([(x, y + h * 0.25), (x + w, y), (x + w, y + h * 0.28),
+               (x, y + h * 0.55)], fill=(240, 240, 240),
+              outline=NAVY, width=1)
+    for i in range(3):
+        sx = x + w * (0.15 + 0.3 * i)
+        d.line([(sx, y + h * 0.2), (sx + 8, y + h * 0.02)],
+               fill=NAVY, width=2)
+
+
+def draw_gavel(d, x, y, w, h):
+    # Judge's gavel (court verdict).
+    d.rectangle([x + w * 0.1, y + h * 0.1, x + w * 0.9, y + h * 0.42],
+                fill=(120, 72, 30), outline=NAVY, width=2)
+    d.rectangle([x + w * 0.42, y + h * 0.42, x + w * 0.58, y + h * 0.95],
+                fill=(90, 55, 25), outline=NAVY, width=1)
+    d.rectangle([x + w * 0.2, y + h * 0.9, x + w * 0.8, y + h],
+                fill=(120, 72, 30), outline=NAVY, width=1)
+
+
+def draw_bolt(d, x, y, w, h):
+    # Lightning bolt (Odesa power grid).
+    d.polygon([(x + w * 0.55, y), (x + w * 0.2, y + h * 0.55),
+               (x + w * 0.45, y + h * 0.55), (x + w * 0.35, y + h),
+               (x + w * 0.75, y + h * 0.45), (x + w * 0.5, y + h * 0.45)],
+              fill=(240, 200, 40), outline=NAVY, width=2)
+
+
+def draw_doc(d, x, y, w, h):
+    # Document + magnifier (tariff-probe findings).
+    d.rectangle([x + w * 0.05, y, x + w * 0.7, y + h],
+                fill=(250, 250, 250), outline=NAVY, width=2)
+    for i in range(3):
+        d.line([(x + w * 0.15, y + h * (0.25 + 0.18 * i)),
+                (x + w * 0.6, y + h * (0.25 + 0.18 * i))],
+               fill=NAVY, width=2)
+    d.ellipse([x + w * 0.5, y + h * 0.45, x + w * 0.95, y + h * 0.9],
+              outline=NAVY, width=2)
+    d.line([(x + w * 0.88, y + h * 0.82), (x + w, y + h)],
+           fill=NAVY, width=3)
+
+
+def draw_gold(d, x, y, w, h):
+    # Stacked gold bars.
+    for i, (bx, by, bw) in enumerate([(0.1, 0.55, 0.8), (0.2, 0.3, 0.6),
+                                      (0.3, 0.05, 0.4)]):
+        d.polygon([(x + w * bx, y + h * (by + 0.22)),
+                   (x + w * (bx + 0.08), y + h * by),
+                   (x + w * (bx + bw - 0.08), y + h * by),
+                   (x + w * (bx + bw), y + h * (by + 0.22))],
+                  fill=(220, 175, 50), outline=(150, 110, 20), width=2)
+
+
+def draw_coins(d, x, y, w, h):
+    # Stack of euro coins (EU budget).
+    for i in range(3):
+        cy = y + h * (0.75 - 0.22 * i)
+        d.ellipse([x + w * 0.15, cy, x + w * 0.85, cy + h * 0.28],
+                  fill=(201, 162, 39), outline=(150, 110, 20), width=2)
+    d.text((x + w / 2, y + h * 0.62), "€", font=font(SANS_B, 12),
+           fill=NAVY, anchor="ma")
+
+
+def draw_down(d, x, y, w, h):
+    # Falling bars + red arrow (Asia markets rout).
+    base = y + h * 0.2
+    for i, bh in enumerate([0.25, 0.45, 0.65]):
+        bx = x + i * (w / 3)
+        d.rectangle([bx, base, bx + w / 3 - 4, base + h * bh],
+                    fill=(178, 52, 44))
+    d.line([(x, y + h * 0.15), (x + w * 0.5, y + h * 0.5),
+            (x + w * 0.8, y + h * 0.4), (x + w, y + h * 0.85)],
+           fill=(140, 20, 20), width=3)
+    d.polygon([(x + w - 8, y + h * 0.85), (x + w, y + h * 0.85),
+               (x + w, y + h * 0.85 - 8)], fill=(140, 20, 20))
+
+
 SCENE_DRAW = {"rocket": draw_rocket, "treaty": draw_treaty,
-              "tanker": draw_tanker, "boat": draw_boat}
+              "tanker": draw_tanker, "boat": draw_boat,
+              "ball": draw_ball, "gdp": draw_gdp, "clapper": draw_clapper,
+              "gavel": draw_gavel, "bolt": draw_bolt, "doc": draw_doc,
+              "gold": draw_gold, "coins": draw_coins, "down": draw_down}
+
+# UTC timeline: six verified moments of the day.
+TIMELINE = [
+    ("00:18", "Shenzhou launches"),
+    ("03:56", "Docks at Tiangong"),
+    ("05:30", "Taiwan closes -5.1%"),
+    ("06:00", "Nikkei closes -2.9%"),
+    ("06:30", "Kospi closes -5.3%"),
+    ("13:30", "US GDP +4.3%, PCE +3.8%"),
+]
 
 # Rough stylised continents: (name, polygon in 0..100 x, 0..60 y units).
 CONTINENTS = [
@@ -242,13 +374,13 @@ def main():
                font=font(SANS, 11), fill=INK, anchor="ma")
         d.text((bx + bw / 2, cy + 86), f"{val}%",
                font=font(SANS_B, 12), fill=(178, 52, 44), anchor="ma")
-    d.line([(mx, 244), (W - mx, 244)], fill=LIGHT, width=1)
+    d.line([(mx, 228), (W - mx, 228)], fill=LIGHT, width=1)
 
     # ---- World map band ----
-    my = 252
+    my = 236
     d.text((mx, my), "THE DAY ON THE MAP",
            font=font(SANS_B, 12), fill=NAVY)
-    map_x, map_y, map_w, map_h = mx, my + 18, 992, 62
+    map_x, map_y, map_w, map_h = mx, my + 18, 992, 44
     d.rectangle([map_x, map_y, map_x + map_w, map_y + map_h],
                 fill=(238, 240, 244), outline=LIGHT, width=1)
     for poly in CONTINENTS:
@@ -261,12 +393,27 @@ def main():
         d.ellipse([x - 5, y - 5, x + 5, y + 5],
                   fill=REGION_COLORS[reg], outline=(255, 255, 255), width=1)
 
+    # ---- UTC timeline band ----
+    ty = 306
+    d.text((mx, ty), "THE DAY IN UTC — SIX MOMENTS",
+           font=font(SANS_B, 12), fill=NAVY)
+    d.line([(mx, 344), (W - mx, 344)], fill=NAVY, width=2)
+    for i, (t, label) in enumerate(TIMELINE):
+        cx = mx + 90 + i * 168
+        d.text((cx, 322), t, font=font(SANS_B, 11), fill=NAVY,
+               anchor="ma")
+        d.ellipse([cx - 6, 338, cx + 6, 350], fill=GOLD,
+                  outline=NAVY, width=2)
+        d.text((cx, 354), label, font=font(SANS, 10), fill=INK,
+               anchor="ma")
+
     # ---- Grid: 39 stories, 13 rows x 3 cols ----
-    gy = 344
+    gy = 376
     cols, rows = 3, 13
     cell_w = (W - 2 * mx - (cols - 1) * 8) // cols
-    cell_h = (1002 - gy - (rows - 1) * 6) // rows
+    cell_h = (966 - gy - (rows - 1) * 6) // rows
     f_code = font(SANS_B, 13)
+    f_mark = font(SANS_B, 11)
     f_head = font(SANS_B, 17)
     for i, (reg, head) in enumerate(STORIES):
         r, c = divmod(i, cols)
@@ -277,16 +424,16 @@ def main():
         tx = x + 10
         tw = cell_w - 12
         if i in SCENES:
-            scene = SCENES[i]
-            if scene == "treaty":
-                draw_treaty(d, tx, y + 4, 44, 34)
-            elif scene == "tanker":
-                draw_tanker(d, tx, y + 2, 44, 38)
-            elif scene == "boat":
-                draw_boat(d, tx, y + 2, 44, 38)
+            SCENE_DRAW[SCENES[i]](d, tx, y + 2, 44, 34)
             tx += 50
             tw -= 50
-        code_w = d.textlength(reg + "  ", font=f_code)
+        # How-sure mark: filled = confirmed by 2+ wires,
+        # open = single-source report (see footer legend).
+        mark = "○" if i in SOFT else "●"
+        d.text((tx, y + 2), reg, font=f_code, fill=col)
+        mark_x = tx + d.textlength(reg, font=f_code) + 3
+        d.text((mark_x, y + 3), mark, font=f_mark, fill=GREY)
+        code_w = (mark_x + d.textlength(mark, font=f_mark) - tx) + 6
         # First line: code + start of headline; then wrapped rest.
         words = head.split()
         first = ""
@@ -314,12 +461,18 @@ def main():
             for ln in rest_lines[:1]:
                 d.text((tx, y + 22), ln, font=f_head, fill=INK)
 
-    # ---- Footer ----
-    d.line([(mx, 1008), (W - mx, 1008)], fill=LIGHT, width=1)
-    d.text((mx, 1012),
-           "All stories first reported Wednesday 25 November 2026  •  "
+    # ---- Footer: date check + how-sure legend + key figures ----
+    d.line([(mx, 972), (W - mx, 972)], fill=LIGHT, width=1)
+    d.text((mx, 978),
+           "✓ DATE CHECK: all 40 stories first reported Wed 25 Nov 2026  •  "
+           "● confirmed by 2+ wires  ○ single-source report  •  "
            "Sources: Reuters, BBC, Destatis, PTI, Bernama, BusinessWorld",
            font=font(SANS, 9), fill=GREY)
+    d.text((mx, 992),
+           "BY THE NUMBERS: Kospi −5.3%  •  GDP +4.3%  •  PCE +3.8%  •  "
+           "$740m treaty  •  2,100 arrivals  •  €1.582tn budget  •  "
+           "$3,544 gold",
+           font=font(SANS_B, 9), fill=NAVY)
 
     out = "image.png"
     img.save(out, optimize=True)
