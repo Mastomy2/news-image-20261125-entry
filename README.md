@@ -13,12 +13,14 @@ Nikkei −2.9%, MSCI Asia ex-Japan −2.3%).
 **v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181** — far
 below the top-50 bar (987,130). **v2 judged live 26 Nov 11:05 WITA:
 972,121, rank 3,030/11,247** — up +25,539, still below the bar
-(988,112). **v3** fixes a factual error (Kospi printed −5.3%, actual
-close −6.16%; Taiwan −4.8%, Nikkei −2.8%), upgrades the tariff story
-to the announced specifics, adds two top-title-grade stories (UK
-energy cap +26% to £2,166; West Java mine flood, 9 dead, 17 trapped),
-reaches 16 drawn scenes, and restores the map band. Fields 15 → 17
-(energy, disaster). Every story now confirmed by 2+ wires.
+(988,112). **v3 judged live 26 Nov 12:38 WITA: 957,712, rank
+7,689/12,671 — DOWN 14,409 from v2; sim missed by 31,534.** **v4**
+is built from the v2 revert point (commit 8049a53), not from v3:
+only the verified fact corrections carry over (Kospi close −6.16%,
+Taiwan −4.80%, Nikkei −2.78%); 13 scenes, 44px map, 3-line lead —
+all v2 craft kept. Two board-evidenced stories return (UK energy
+cap, West Java mine) and the tariff story is specific + confirmed.
+Every story now confirmed by 2+ wires.
 
 ## Why this design wins (simulator, calibrated on real judged data)
 
@@ -69,22 +71,36 @@ v2 sim 979,982 (+33,400 over judged v1) — still 7,148 under the
 top-50 bar on conservative weights, so the dev score after submit
 decides whether another polish round is needed.
 
-## v3: the factual error and the missing stories (simulator_v3)
+## v3: what happened (simulator_v3) — and the autopsy
 
-v2 realized +25,539 vs its sim +33,400, so v3 weights carry a
-realization factor 0.7645. Anchor: v2 judged 972,121; bar 988,112.
+v3 sim 989,246 (+17,125 over judged v2) — but the dev score came
+back **957,712, down 14,409**. Sim miss: 31,534. The v2-based
+simulator is discredited for scene/map/field levers. Autopsy from
+the live board (12,671 entries): the v3 content changes are NOT
+the culprit by any board measure — 'west java' titles mean 982,232
+(median 982,873, n=795, best rank 15), 'energy price' mean 982,189
+(best rank 19), 'tariff' mean 979,761 (best rank 1). Scenes 14–16
+titles mean 966,320 vs 11–13 mean 967,700 (slightly negative).
+Judge intervals overlap (v2 962,447–981,795; v3 944,444–970,981),
+so part of the drop may be noise and/or a stronger field at grading
+time. Attribution is uncertain — stated plainly.
+
+## v4: revert to v2 + board-evidenced changes only (simulator_v4)
+
+v4 weights are deliberately tiny (board gap ~32k discounted 16x);
+sim v4 is a weak filter — the gate rests on board evidence.
 
 | iter | change | sim before | sim after | Δ | keep? |
 | --- | --- | --- | --- | --- | --- |
-| 1 | fact fix (Kospi −6.2%, Taiwan −4.8%, Nikkei −2.8%) + tariffs specific/confirmed + 2 salience stories (UK energy cap, West Java mine) | 972,121 | 982,824 | +10,703 | yes |
-| 2 | scenes 13 → 16 (+plug, +helmet, +chip) | 982,824 | 986,952 | +4,128 | yes |
-| 3 | map band 44 → 58 px (lead tightened) | 986,952 | 989,246 | +2,294 | yes |
+| base | fact fix (Kospi −6.2%, Taiwan −4.8%, Nikkei −2.8%) | 972,121 | 973,121 | +1,000 | yes |
+| 1 | West Java mine flood story | 973,121 | 975,121 | +2,000 | yes |
+| 2 | UK energy cap story | 975,121 | 977,121 | +2,000 | yes |
+| 3 | tariff story specific + confirmed | 977,121 | 978,621 | +1,500 | yes |
 
-v3 sim 989,246 (+17,125 over judged v2) — above the bar on sim; the
-dev score after submit is the truth. The Kospi error: v1/v2 printed
-−5.3% from a morning wire; the Korea Exchange close was −6.16%
-(4,697.51, down 308.52). Taiwan closed −4.80% (38,195.43), Nikkei
-−2.78% (57,011.62), MSCI Asia Pacific −2.3%.
+v4 sim 978,621 (+6,500 over judged v2) — still below the bar
+988,250 on sim, but the gate (sim > 972,121 + live-board evidence)
+is met; the dev score after submit is the truth. v3 craft changes
+(16 scenes, 58px map, tightened lead) are NOT in v4.
 
 ## The 40 stories (all first reported 25 Nov 2026)
 
@@ -154,7 +170,7 @@ were dropped for the UCL Wednesday results and the US data.
 ## Entry
 
 `main.py` (stdlib only) validates `image.png` (1024×1024 PNG,
-188,344 bytes, sha256 e6114871d1cd9f68ba2804c2c9bf60e3c823fc28bd898c8be04ce018c371367c,
+189,147 bytes, sha256 fac4b5700bced96be6ec458c54674c8b6a4fb385d708c627813a972b3dc24eeb,
 under the 1 MiB limit) and copies it to
 `$MAKEFUN_OUTPUT_DIR/entry.png`, verifying the copy byte-for-byte.
 `draw_poster.py` renders the poster deterministically with Pillow.
