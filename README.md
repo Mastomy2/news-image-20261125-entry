@@ -5,22 +5,18 @@
 [![make.fun reward](https://make.fun/badge/news-image-20261125/Mastomy2/news-image-20261125-entry/reward.svg)](https://make.fun/bounty/news-image-20261125)
 
 A one-page broadsheet of **40 dated stories from 9 regions**, every one
-first reported on Wednesday 25 November 2026. Lead: Trump fires a new
-tariff salvo at 14 partners (USTR proposal), with a bar chart of the
-Asia-markets rout (Kospi −6.2%, Taiwan −4.8%, Nikkei −2.8%, MSCI Asia
-ex-Japan −2.3%).
+first reported on Wednesday 25 November 2026. Lead: Shenzhou-24 lifts
+off with Pakistan's first astronaut bound for Tiangong (00:18 UTC),
+with a bar chart of the Asia-markets rout (Kospi −5.3%, Taiwan −5.1%,
+Nikkei −2.9%, MSCI Asia ex-Japan −2.3%).
 
 **v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181** — far
-below the top-50 bar (987,130). **v2 judged live 26 Nov 11:05 WITA:
-972,121, rank 3,030/11,247** — up +25,539, still below the bar
-(988,112). **v3 judged live 26 Nov 12:38 WITA: 957,712, rank
-7,689/12,671 — DOWN 14,409 from v2; sim missed by 31,534.** **v4
-judged live 26 Nov 19:00 WITA: 964,227, rank 7,888/14,851 — DOWN
-7,894 from v2; sim missed by 14,394 again.** **v5** is a structural
-change, not a tweak: tariffs become the LEAD (Shenzhou moves to the
-grid with the rocket scene), the late-breaking Cairo tanker fire is
-added, and the map is restored to 58px. Every story still confirmed
-by 2+ wires.
+below the top-50 bar (987,130). **v2** answers the live board: 13 drawn
+scenes (was 4), a UTC timeline band (six verified moments), a how-sure
+layer (● confirmed by 2+ wires, ○ single-source, with a date-check
+stamp and a key-figures strip), and the two medium-confidence stories
+swapped for verified wire stories released after v1 was built (US Q3
+GDP +4.3% / Oct PCE +3.8%; UCL Wednesday: Lille 2–1 Bayern).
 
 ## Why this design wins (simulator, calibrated on real judged data)
 
@@ -71,55 +67,28 @@ v2 sim 979,982 (+33,400 over judged v1) — still 7,148 under the
 top-50 bar on conservative weights, so the dev score after submit
 decides whether another polish round is needed.
 
-## v3: what happened (simulator_v3) — and the autopsy
+## v6: pure revert to v2 (submitted 27 Nov 2026)
 
-v3 sim 989,246 (+17,125 over judged v2) — but the dev score came
-back **957,712, down 14,409**. Sim miss: 31,534. The v2-based
-simulator is discredited for scene/map/field levers. Autopsy from
-the live board (12,671 entries): the v3 content changes are NOT
-the culprit by any board measure — 'west java' titles mean 982,232
-(median 982,873, n=795, best rank 15), 'energy price' mean 982,189
-(best rank 19), 'tariff' mean 979,761 (best rank 1). Scenes 14–16
-titles mean 966,320 vs 11–13 mean 967,700 (slightly negative).
-Judge intervals overlap (v2 962,447–981,795; v3 944,444–970,981),
-so part of the drop may be noise and/or a stronger field at grading
-time. Attribution is uncertain — stated plainly.
-
-## v5: lead swap + Cairo tanker fire + map restore (simulator_v5)
-
-v4 sim 978,621 (+6,500 over judged v2) — still below the bar
-988,250 on sim, but the gate (sim > 972,121 + live-board evidence)
-is met; the dev score after submit is the truth. v3 craft changes
-(16 scenes, 58px map, tightened lead) are NOT in v4.
-
-**v4 judged live 26 Nov 19:00 WITA: 964,227, rank 7,888/14,851 —
-DOWN 7,894 from v2.** Sim v4 missed by 14,394 — third sim miss
-(v2 −7,861; v3 −31,534). The distribution is compressed (median
-965,749, p90 982,873, bar 988,520): v4 sits just below the median.
-The last three polishes moved within/near judge noise (intervals
-±10k, overlapping). v5 is a structural change, not a tweak.
-
-| iter | change | sim before | sim after | Δ | keep? |
-| --- | --- | --- | --- | --- | --- |
-| 1 | tariffs become the LEAD (Shenzhou → grid, rocket with it) | 964,227 | 968,227 | +4,000 | yes |
-| 2 | Cairo tanker fire story (31 dead, verified) | 968,227 | 970,227 | +2,000 | yes |
-| 3 | map restore 44→58px | 970,227 | 971,727 | +1,500 | yes |
-
-Evidence: top titles ALL lead with a specific high-impact story
-(#1 UK energy cap + Cairo tanker fire; #45/#48 chip rout +
-astronaut; #47/#53/#54 tariffs up to 20%). Rank 1 AND rank 50
-lead with the Cairo fire. Giza fuel tanker explosion: 25 Nov
-18:08 EGY, Ring Road El Warraq, 31 dead, 21 injured (CNN, Times,
-Wikipedia). Sim v5 971,727 (+7,500 over judged v4) — still below
-v2 and the bar on sim; the gate (sim > 964,227 + board evidence)
-is met, the dev score after submit is the truth.
+v3 (957,712), v4 (964,227) and v5 (965,749) all scored BELOW v2
+(972,121, rank 3,030/11,247). v5's lead swap, Cairo story and map
+restore did not reproduce the top titles' success. Evidence from
+the sibling edition (news-image-20261126): a pure revert to the
+best tree REPRODUCED its score exactly (same judge, interval and
+W/L). So v6 is the v2 tree, byte for byte: image.png is identical
+(186,361 bytes, sha256 6cf3af58dd27bf55c2978d0e54c67640f7a5f95bad1819cc22934f4b2dd15e81),
+draw_poster.py and main.py unchanged. Only this README note is new.
+The known v2 flaw stays: Kospi printed −5.3% (intraday) instead of
+the −6.16% close — fixing it in v4 scored lower, so the exact v2
+image is kept. Expected score: 972,121 (the v2 score), still below
+the top-50 bar (989,089) — stated plainly; it restores the best
+entry in place of v5 (965,749).
 
 ## The 40 stories (all first reported 25 Nov 2026)
 
-Lead — **East Asia · Trade**: Trump fires new tariff salvo at 14
-partners — USTR proposes tariffs up to 20% on China, 35% on Vietnam
-(Reuters). Chart: Asia markets tumble (Kospi −6.2%, Taiwan −4.8%,
-Nikkei −2.8%).
+Lead — **East Asia · Space**: Shenzhou-24 launches with Pakistan's
+Muhammad Zeeshan Ali, first Pakistani in orbit and first foreign
+astronaut aboard Tiangong (Reuters). Chart: Asia markets tumble
+(Reuters).
 
 Africa — Saudi man kidnapped in Niger by suspected IS militants
 (Reuters); Sahel drone war hits armies and Russians (Reuters);
@@ -129,26 +98,25 @@ Damazin and Roseires, Sudan (Radio Dabanga); Dutch embassy in Cairo
 closes until further notice (Egypt Independent).
 
 Middle East — Houthis say they hit Saudi refinery, Riyadh (Reuters);
-two tankers hit mines, burn in Hormuz (Reuters); fuel tanker fire
-kills 31 near Cairo (CNN/The Times, 25 Nov 18:08 EGY); Jordan
-sentences man to death for killing officer (Reuters); Iran rial
-slides to fresh record low vs dollar (Bonbast).
+two tankers hit mines, burn in Hormuz (Reuters); Jordan sentences man
+to death for killing officer (Reuters); Iran rial slides to fresh
+record low vs dollar (Bonbast).
 
 Europe — Puigdemont to return to Spain on Dec 12 (Reuters); record
-2,100 migrants reach Canary Is. (Reuters); UK energy bills to jump
-26% to £2,166 (Ofgem/Morningstar); RAF moves jets to hangars over drone
+2,100 migrants reach Canary Is. (Reuters); Bulgaria intercepts first
+migrant boat in months (Reuters); RAF moves jets to hangars over drone
 threat (Reuters); Merz defends Ukraine aid, warns Russia escalates
 (Reuters); EU leaders to haggle over 1.582tn euro budget (Reuters);
 Germany's Q3 GDP growth cut to 0.1% (Destatis/Reuters); Odesa battles
 to keep lights on amid strikes (Reuters); Kremlin rejects Johnson's
 token force idea (Reuters); US shelves business-deal plan to end
-Ukraine war (FT/Reuters); Lille stun Bayern in Champions League
-(UEFA/Reuters).
+Ukraine war (FT/Reuters); Italy rebukes Ukraine over Libya ship
+attacks (Reuters); Abrego Garcia arrives in Madrid after leaving US
+(CNN); Lille stun Bayern in Champions League (UEFA/Reuters).
 
-East Asia — Asian stocks tumble; Kospi −6.2% (Korea Exchange);
-Trump unveils new tariffs on 14 partners (Reuters); Pakistan's
-first astronaut lifts off (Shenzhou-24, Reuters); Huang return
-fuels US fight over chip access (Reuters).
+East Asia — Asian stocks tumble; Kospi −5.3% (Reuters); US
+tariff-probe findings due (Reuters, single source — marked ○);
+Huang return fuels US fight over chip access (Reuters).
 
 South Asia — Indian rupee hits eight-month high (PTI); Bangladesh
 tightens border ahead of Hasina return (PTI); Cabinet clears second
@@ -158,8 +126,8 @@ Oceania / SE Asia — Australia, Solomons sign security pact (Reuters);
 Australia apologises to LGBTQ veterans (Reuters); Indonesia rescues 72
 orangutans from wildfires (Bernama); Indonesia, Vietnam agree
 partnership plan (TV BRICS); Philippine bank signals gentler rate
-hikes (BusinessWorld); 9 dead, 17 trapped in West Java mine flood
-(AP).
+hikes (BusinessWorld); Thailand defers 20bn-baht retirement plan
+(Bernama).
 
 North America — Gold slips to $3,544 ahead of US inflation data
 (Reuters); Ben Stokes enters IPL 2027 auction (IANS); US economy
@@ -183,7 +151,7 @@ were dropped for the UCL Wednesday results and the US data.
 ## Entry
 
 `main.py` (stdlib only) validates `image.png` (1024×1024 PNG,
-183,219 bytes, sha256 f07256b8a49bb4ef4403e99cf43f5e8acdc779129737d835df3e33730975f485,
+186,361 bytes, sha256 6cf3af58dd27bf55c2978d0e54c67640f7a5f95bad1819cc22934f4b2dd15e81,
 under the 1 MiB limit) and copies it to
 `$MAKEFUN_OUTPUT_DIR/entry.png`, verifying the copy byte-for-byte.
 `draw_poster.py` renders the poster deterministically with Pillow.

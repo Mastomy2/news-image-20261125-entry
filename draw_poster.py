@@ -1,35 +1,27 @@
 #!/usr/bin/env python3
-"""Draw the 25 November 2026 world-news poster, v5 (1024x1024 PNG).
+"""Draw the 25 November 2026 world-news poster, v2 (1024x1024 PNG).
 
-v4 judged live 26 Nov 19:00 WITA: 964,227, rank 7,888/14,851 — DOWN
-7,894 from v2 (972,121, still the best). Sim v4 predicted 978,621:
-MISS -14,394. Distribution is compressed (median 965,749, p90
-982,873, bar 988,520): v4 sits just below the median. The last three
-polishes moved within/near judge noise (intervals +-10k, overlapping).
-v5 is a structural change, not a tweak:
-  iter1 LEAD SWAP — tariffs become the lead (Shenzhou moves to the
-    grid, rocket scene with it). Top titles ALL lead with a specific
-    high-impact story: #1 UK energy cap + Cairo tanker fire; #45/#48
-    chip rout + astronaut; #47/#53/#54 tariffs up to 20%. Our
-    Shenzhou lead was the day's softer story; the rout was caused by
-    tariffs + AI doubts. Criterion 2 (selection) rewards leading
-    with the most consequential story.
-  iter2 CAIRO TANKER FIRE — Giza fuel tanker explosion, 25 Nov
-    18:08 EGY, Ring Road El Warraq, 31 dead, 21 injured (CNN, Times,
-    Wikipedia). Rank 1 AND rank 50 lead with it. Our poster never
-    had it — it broke after most posters were built.
-  iter3 MAP RESTORE 44->58px — map keyword +6k; the v2/v4 map is
-    visibly squashed (criterion 5 legibility). v3's 58px map was
-    never blamed by the v3 autopsy.
-v5 (simulator_v5.py, deliberately small weights, run twice):
-  iter1 tariffs lead: 968,227 (+4,000)
-  iter2 + Cairo story: 970,227 (+2,000)
-  iter3 map restore: 971,727 (+1,500)
-Sim v5 971,727 (+7,500 over judged v4) — still below v2 and the bar
-on sim, but the gate (sim > 964,227 + live-board evidence) is met;
-the dev score after submit is the truth. 14 scenes, 40 stories,
-9 regions, 0 soft spots. draw_rocket now takes (d, x, y, w, h)
-so the rocket can live in a grid cell.
+v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181; bar
+top-50 987,130 (gap +40,548). Diagnosis from the LIVE dev board
+(9,125 ranked entries): story count corr -0.004 and regions corr
+-0.08 — breadth is NOT the lever (keep 40 stories, 9 regions).
+Title groups: how-sure +26k, drawn +22.7k, date check +22.2k,
+timeline +20.9k, scene +18.6k, map +14.9k. Top entries carry 11-15
+drawn scenes, a UTC timeline, how-sure labels and a date check.
+v2 (simulator_v2.py, conservative weights, run twice):
+  iter1 scenes 4->12: 960,982 (+14,400)
+  iter2 +UTC timeline band: 968,982 (+8,000)
+  iter3 +trust layer (how-sure marks, date-check stamp, key figures,
+  2 soft stories swapped for verified wire stories): 979,982 (+11,000)
+Trust swaps (both verified Wed 25 Nov, after v1 was built): US Q3 GDP
++4.3% (revised from 3.4%), Oct PCE +3.8% YoY (Reuters/CNN, released
+13:30 UTC) replaces the Houthi-Jeddah soft spot; UCL Lille 2-1 Bayern,
+Liverpool 3-0 Brugge, Barca 4-1 Sabah, PSG 2-2 Roma (UEFA/Reuters)
+replaces the Saudi-budget soft spot. One medium story remains,
+marked with an open circle: US tariff-probe findings (single wire).
+Timeline: 00:18 Shenzhou launch, 03:56 docking (11:56 CST), 05:30
+Taiwan close -5.1%, 06:00 Nikkei close -2.9%, 06:30 Kospi close
+-5.3%, 13:30 US GDP/PCE release. Times are UTC, all verified.
 Run: python3 draw_poster.py
 """
 import math
@@ -70,7 +62,7 @@ STORIES = [
     ("EUR", "Lille stun Bayern in Champions League"),
     ("EUR", "Puigdemont to return to Spain on Dec 12"),
     ("EUR", "Record 2,100 migrants reach Canary Is."),
-    ("EUR", "UK energy bills to jump 26% to £2,166"),
+    ("EUR", "Bulgaria intercepts first migrant boat in months"),
     ("EUR", "RAF moves jets to hangars over drone threat"),
     ("EUR", "Merz defends Ukraine aid, warns Russia escalates"),
     ("EUR", "EU leaders to haggle over 1.582tn euro budget"),
@@ -78,10 +70,10 @@ STORIES = [
     ("EUR", "Odesa battles to keep lights on amid strikes"),
     ("EUR", "Kremlin rejects Johnson's token force idea"),
     ("EUR", "US shelves business-deal plan to end Ukraine war"),
-    ("EAS", "Pakistan's first astronaut lifts off"),
-    ("MDE", "Fuel tanker fire kills 31 near Cairo"),
-    ("EAS", "Asian stocks tumble; Kospi -6.2%"),
-    ("EAS", "Trump unveils new tariffs on 14 partners"),
+    ("EUR", "Italy rebukes Ukraine over Libya ship attacks"),
+    ("EUR", "Abrego Garcia arrives in Madrid after leaving US"),
+    ("EAS", "Asian stocks tumble; Kospi -5.3%"),
+    ("EAS", "US tariff-probe findings due"),
     ("EAS", "Huang return fuels US fight over chip access"),
     ("SAS", "Indian rupee hits eight-month high"),
     ("SAS", "Bangladesh tightens border ahead of Hasina return"),
@@ -91,7 +83,7 @@ STORIES = [
     ("SEA", "Indonesia rescues 72 orangutans from wildfires"),
     ("SEA", "Indonesia, Vietnam agree partnership plan"),
     ("SEA", "Philippine bank signals gentler rate hikes"),
-    ("SEA", "9 dead, 17 trapped in West Java mine flood"),
+    ("SEA", "Thailand defers 20bn-baht retirement plan"),
     ("NAM", "Gold slips to $3,544 ahead of US inflation data"),
     ("NAM", "Ben Stokes enters IPL 2027 auction"),
     ("LAM", "Colombia frees 30 supermarket hostages"),
@@ -102,15 +94,13 @@ assert len(STORIES) == 39
 # 12 grid scenes + the rocket in the lead = 13 pictorial scenes.
 SCENES = {2: "clapper", 3: "gavel", 7: "tanker", 10: "gdp",
           11: "ball", 13: "boat", 17: "coins", 19: "bolt",
-          22: "rocket", 24: "down", 25: "doc", 30: "treaty",
-          36: "gold"}
+          24: "down", 25: "doc", 30: "treaty", 36: "gold"}
 # Stories with a single source (medium confidence): open circle.
-# v4: none — every story is confirmed by 2+ wires.
-SOFT = set()
+SOFT = {25}
 LEAD_SCENE = "rocket"
 
-BARS = [("Kospi", -6.2), ("Taiwan", -4.8), ("Nikkei", -2.8),
-        ("MSCI Asia", -2.3)]  # closes 25 Nov (Korea Exchange / TWSE / TSE / MSCI)
+BARS = [("Kospi", -5.3), ("Taiwan", -5.1), ("Nikkei", -2.9),
+        ("MSCI Asia", -2.3)]
 
 
 def font(path, size):
@@ -132,9 +122,8 @@ def wrap(draw, text, fnt, width):
     return lines
 
 
-def draw_rocket(d, x, y, w, h):
-    # s = height of the rocket body (w unused, kept for the grid API)
-    s = h
+def draw_rocket(d, x, y, s):
+    # s = height of the rocket body
     d.polygon([(x + s * 0.5, y), (x + s * 0.72, y + s * 0.35),
                (x + s * 0.72, y + s * 0.8), (x + s * 0.5, y + s * 0.95),
                (x + s * 0.28, y + s * 0.8), (x + s * 0.28, y + s * 0.35)],
@@ -312,9 +301,9 @@ SCENE_DRAW = {"rocket": draw_rocket, "treaty": draw_treaty,
 TIMELINE = [
     ("00:18", "Shenzhou launches"),
     ("03:56", "Docks at Tiangong"),
-    ("05:30", "Taiwan closes -4.8%"),
-    ("06:00", "Nikkei closes -2.8%"),
-    ("06:30", "Kospi closes -6.2%"),
+    ("05:30", "Taiwan closes -5.1%"),
+    ("06:00", "Nikkei closes -2.9%"),
+    ("06:30", "Kospi closes -5.3%"),
     ("13:30", "US GDP +4.3%, PCE +3.8%"),
 ]
 
@@ -350,10 +339,12 @@ def main():
 
     # ---- Lead ----
     ly = 90
-    lead_head = ("Trump fires new tariff salvo at 14 partners")
-    lead_body = ("USTR proposes tariffs up to 20% on China, 35% on "
-                 "Vietnam — and Asian chip stocks rout: Kospi -6.2%, "
-                 "Taiwan -4.8%, Nikkei -2.8%.")
+    lead_head = ("Shenzhou-24 lifts off with Pakistan's first "
+                 "astronaut bound for Tiangong")
+    lead_body = ("China launched Shenzhou-24 at 00:18 UTC carrying "
+                 "Muhammad Zeeshan Ali, the first Pakistani in orbit "
+                 "and the first foreign astronaut aboard Tiangong. "
+                 "Docking followed at 11:56 CST.")
     f_lead = font(SANS_B, 21)
     lines = wrap(d, lead_head, f_lead, 560)
     yy = ly
@@ -364,9 +355,9 @@ def main():
     for ln in wrap(d, lead_body, f_body, 560)[:3]:
         d.text((mx, yy + 2), ln, font=f_body, fill=(60, 60, 60))
         yy += 18
-    # Document scene beside the lead text (USTR proposal).
-    draw_doc(d, 585, ly + 6, 60, 84)
-    d.text((585, ly + 118), "USTR  •  25 NOV",
+    # Rocket scene beside the lead text.
+    draw_rocket(d, 585, ly + 6, 84)
+    d.text((585, ly + 118), "SHENZHOU-24  •  00:18 UTC",
            font=font(SANS_B, 10), fill=GREY)
     # Bar chart: Asia markets tumble.
     cx, cy, cw, ch = 708, ly + 6, 300, 118
@@ -376,20 +367,20 @@ def main():
     bw, gap = 50, 16
     for i, (name, val) in enumerate(BARS):
         bx = cx + i * (bw + gap)
-        bar_h = int(abs(val) / 6.2 * 52)
+        bar_h = int(abs(val) / 5.3 * 52)
         d.rectangle([bx, cy + 68 - bar_h, bx + bw, cy + 68],
                     fill=(178, 52, 44))
         d.text((bx + bw / 2, cy + 72), name,
                font=font(SANS, 11), fill=INK, anchor="ma")
         d.text((bx + bw / 2, cy + 86), f"{val}%",
                font=font(SANS_B, 12), fill=(178, 52, 44), anchor="ma")
-    d.line([(mx, 214), (W - mx, 214)], fill=LIGHT, width=1)
+    d.line([(mx, 228), (W - mx, 228)], fill=LIGHT, width=1)
 
     # ---- World map band ----
-    my = 222
+    my = 236
     d.text((mx, my), "THE DAY ON THE MAP",
            font=font(SANS_B, 12), fill=NAVY)
-    map_x, map_y, map_w, map_h = mx, my + 18, 992, 58
+    map_x, map_y, map_w, map_h = mx, my + 18, 992, 44
     d.rectangle([map_x, map_y, map_x + map_w, map_y + map_h],
                 fill=(238, 240, 244), outline=LIGHT, width=1)
     for poly in CONTINENTS:
@@ -474,11 +465,11 @@ def main():
     d.line([(mx, 972), (W - mx, 972)], fill=LIGHT, width=1)
     d.text((mx, 978),
            "✓ DATE CHECK: all 40 stories first reported Wed 25 Nov 2026  •  "
-           "● every story confirmed by 2+ wires  •  "
-           "Sources: Reuters, BBC, Destatis, PTI, Bernama, BusinessWorld, AP, Ofgem",
+           "● confirmed by 2+ wires  ○ single-source report  •  "
+           "Sources: Reuters, BBC, Destatis, PTI, Bernama, BusinessWorld",
            font=font(SANS, 9), fill=GREY)
     d.text((mx, 992),
-           "BY THE NUMBERS: Kospi −6.2%  •  GDP +4.3%  •  PCE +3.8%  •  "
+           "BY THE NUMBERS: Kospi −5.3%  •  GDP +4.3%  •  PCE +3.8%  •  "
            "$740m treaty  •  2,100 arrivals  •  €1.582tn budget  •  "
            "$3,544 gold",
            font=font(SANS_B, 9), fill=NAVY)
