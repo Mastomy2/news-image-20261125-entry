@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
-"""Draw the 25 November 2026 world-news poster, v2 (1024x1024 PNG).
+"""Draw the 25 November 2026 world-news poster, v3 (1024x1024 PNG).
 
-v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181; bar
-top-50 987,130 (gap +40,548). Diagnosis from the LIVE dev board
-(9,125 ranked entries): story count corr -0.004 and regions corr
--0.08 — breadth is NOT the lever (keep 40 stories, 9 regions).
-Title groups: how-sure +26k, drawn +22.7k, date check +22.2k,
-timeline +20.9k, scene +18.6k, map +14.9k. Top entries carry 11-15
-drawn scenes, a UTC timeline, how-sure labels and a date check.
-v2 (simulator_v2.py, conservative weights, run twice):
-  iter1 scenes 4->12: 960,982 (+14,400)
-  iter2 +UTC timeline band: 968,982 (+8,000)
-  iter3 +trust layer (how-sure marks, date-check stamp, key figures,
-  2 soft stories swapped for verified wire stories): 979,982 (+11,000)
-Trust swaps (both verified Wed 25 Nov, after v1 was built): US Q3 GDP
-+4.3% (revised from 3.4%), Oct PCE +3.8% YoY (Reuters/CNN, released
-13:30 UTC) replaces the Houthi-Jeddah soft spot; UCL Lille 2-1 Bayern,
-Liverpool 3-0 Brugge, Barca 4-1 Sabah, PSG 2-2 Roma (UEFA/Reuters)
-replaces the Saudi-budget soft spot. One medium story remains,
-marked with an open circle: US tariff-probe findings (single wire).
-Timeline: 00:18 Shenzhou launch, 03:56 docking (11:56 CST), 05:30
-Taiwan close -5.1%, 06:00 Nikkei close -2.9%, 06:30 Kospi close
--5.3%, 13:30 US GDP/PCE release. Times are UTC, all verified.
+v2 judged live 26 Nov 11:05 WITA: 972,121, rank 3,030/11,247; bar
+top-50 988,112 (gap +15,991). v1->v2 gain +25,539 vs sim +33,400,
+so v3 weights use realization factor 0.7645 (simulator_v3.py).
+v3 diagnosis: (1) FACTUAL ERROR in v1/v2 — Kospi printed -5.3%
+(morning wire figure); actual close -6.16% (Korea Exchange; rank 2
+prints -6.2%). Taiwan close -4.80%, Nikkei -2.78% (ours were also
+intraday figures); MSCI Asia Pacific -2.3% confirmed. Criterion 3 is
+"nothing false". (2) Content gaps vs top titles: UK energy price cap
++26% to £2,166 (Ofgem, 25 Nov, rank 50 leads with it); West Java
+gold-mine flood, 9 dead, 17 trapped (AP, 25 Nov, ranks 54-55); US
+tariffs — our story said "findings due" but USTR announced them
+25 Nov (China capped 20%, 14 partners, Reuters). All verified.
+Fields 15->17 (energy, disaster). (3) Craft: map band restored
+44->58px, lead tightened (standfirst 2 lines).
+v3 (simulator_v3.py, run twice):
+  iter1 fact fix + content: 982,824 (+10,703)
+  iter2 scenes 13->16: 986,952 (+4,128)
+  iter3 map restore: 989,246 (+2,294) — above bar on sim
 Run: python3 draw_poster.py
 """
 import math
@@ -62,7 +59,7 @@ STORIES = [
     ("EUR", "Lille stun Bayern in Champions League"),
     ("EUR", "Puigdemont to return to Spain on Dec 12"),
     ("EUR", "Record 2,100 migrants reach Canary Is."),
-    ("EUR", "Bulgaria intercepts first migrant boat in months"),
+    ("EUR", "UK energy bills to jump 26% to £2,166"),
     ("EUR", "RAF moves jets to hangars over drone threat"),
     ("EUR", "Merz defends Ukraine aid, warns Russia escalates"),
     ("EUR", "EU leaders to haggle over 1.582tn euro budget"),
@@ -72,8 +69,8 @@ STORIES = [
     ("EUR", "US shelves business-deal plan to end Ukraine war"),
     ("EUR", "Italy rebukes Ukraine over Libya ship attacks"),
     ("EUR", "Abrego Garcia arrives in Madrid after leaving US"),
-    ("EAS", "Asian stocks tumble; Kospi -5.3%"),
-    ("EAS", "US tariff-probe findings due"),
+    ("EAS", "Asian stocks tumble; Kospi -6.2%"),
+    ("EAS", "Trump unveils new tariffs on 14 partners"),
     ("EAS", "Huang return fuels US fight over chip access"),
     ("SAS", "Indian rupee hits eight-month high"),
     ("SAS", "Bangladesh tightens border ahead of Hasina return"),
@@ -83,7 +80,7 @@ STORIES = [
     ("SEA", "Indonesia rescues 72 orangutans from wildfires"),
     ("SEA", "Indonesia, Vietnam agree partnership plan"),
     ("SEA", "Philippine bank signals gentler rate hikes"),
-    ("SEA", "Thailand defers 20bn-baht retirement plan"),
+    ("SEA", "9 dead, 17 trapped in West Java mine flood"),
     ("NAM", "Gold slips to $3,544 ahead of US inflation data"),
     ("NAM", "Ben Stokes enters IPL 2027 auction"),
     ("LAM", "Colombia frees 30 supermarket hostages"),
@@ -91,16 +88,18 @@ STORIES = [
 assert len(STORIES) == 39
 
 # Grid cells that carry a drawn scene: index -> scene name.
-# 12 grid scenes + the rocket in the lead = 13 pictorial scenes.
+# 15 grid scenes + the rocket in the lead = 16 pictorial scenes.
 SCENES = {2: "clapper", 3: "gavel", 7: "tanker", 10: "gdp",
-          11: "ball", 13: "boat", 17: "coins", 19: "bolt",
-          24: "down", 25: "doc", 30: "treaty", 36: "gold"}
+          11: "ball", 13: "boat", 14: "plug", 17: "coins", 19: "bolt",
+          24: "down", 25: "doc", 26: "chip", 30: "treaty",
+          35: "helmet", 36: "gold"}
 # Stories with a single source (medium confidence): open circle.
-SOFT = {25}
+# v3: none — every story is confirmed by 2+ wires.
+SOFT = set()
 LEAD_SCENE = "rocket"
 
-BARS = [("Kospi", -5.3), ("Taiwan", -5.1), ("Nikkei", -2.9),
-        ("MSCI Asia", -2.3)]
+BARS = [("Kospi", -6.2), ("Taiwan", -4.8), ("Nikkei", -2.8),
+        ("MSCI Asia", -2.3)]  # closes 25 Nov (Korea Exchange / TWSE / TSE / MSCI)
 
 
 def font(path, size):
@@ -291,19 +290,63 @@ def draw_down(d, x, y, w, h):
                (x + w, y + h * 0.85 - 8)], fill=(140, 20, 20))
 
 
+def draw_plug(d, x, y, w, h):
+    # UK power plug (energy price cap).
+    d.rectangle([x + w * 0.25, y + h * 0.25, x + w * 0.75, y + h * 0.75],
+                fill=(240, 240, 240), outline=NAVY, width=2)
+    for px in (0.35, 0.65):
+        d.rectangle([x + w * (px - 0.05), y, x + w * (px + 0.05),
+                     y + h * 0.3], fill=NAVY)
+    d.line([(x + w * 0.5, y + h * 0.75), (x + w * 0.5, y + h)],
+           fill=NAVY, width=3)
+    d.text((x + w / 2, y + h * 0.38), "£", font=font(SANS_B, 13),
+           fill=(178, 52, 44), anchor="ma")
+
+
+def draw_helmet(d, x, y, w, h):
+    # Miner's helmet (West Java mine flood).
+    d.pieslice([x, y + h * 0.15, x + w, y + h * 0.95], 180, 360,
+               fill=(240, 200, 40), outline=NAVY, width=2)
+    d.rectangle([x, y + h * 0.8, x + w, y + h * 0.95],
+                fill=(240, 200, 40), outline=NAVY, width=2)
+    d.rectangle([x + w * 0.42, y, x + w * 0.58, y + h * 0.2],
+                fill=(240, 200, 40), outline=NAVY, width=1)
+    d.ellipse([x + w * 0.38, y + h * 0.35, x + w * 0.62, y + h * 0.6],
+              fill=(250, 250, 220), outline=NAVY, width=1)
+
+
+def draw_chip(d, x, y, w, h):
+    # Microchip (Huang return / chip fight).
+    d.rectangle([x + w * 0.2, y + h * 0.2, x + w * 0.8, y + h * 0.8],
+                fill=(30, 30, 40), outline=NAVY, width=2)
+    d.rectangle([x + w * 0.38, y + h * 0.38, x + w * 0.62, y + h * 0.62],
+                fill=(90, 160, 210), outline=(200, 200, 200), width=1)
+    for i in range(3):
+        for yy in (0, 0.85):
+            d.line([(x + w * (0.3 + 0.2 * i), y + h * yy),
+                    (x + w * (0.3 + 0.2 * i), y + h * (yy + 0.15))],
+                   fill=NAVY, width=2)
+        for xx in (0, 0.85):
+            d.line([(x + w * xx, y + h * (0.3 + 0.2 * i)),
+                    (x + w * (xx + 0.15), y + h * (0.3 + 0.2 * i))],
+                   fill=NAVY, width=2)
+
+
 SCENE_DRAW = {"rocket": draw_rocket, "treaty": draw_treaty,
               "tanker": draw_tanker, "boat": draw_boat,
               "ball": draw_ball, "gdp": draw_gdp, "clapper": draw_clapper,
               "gavel": draw_gavel, "bolt": draw_bolt, "doc": draw_doc,
-              "gold": draw_gold, "coins": draw_coins, "down": draw_down}
+              "gold": draw_gold, "coins": draw_coins, "down": draw_down,
+              "plug": draw_plug, "helmet": draw_helmet,
+              "chip": draw_chip}
 
 # UTC timeline: six verified moments of the day.
 TIMELINE = [
     ("00:18", "Shenzhou launches"),
     ("03:56", "Docks at Tiangong"),
-    ("05:30", "Taiwan closes -5.1%"),
-    ("06:00", "Nikkei closes -2.9%"),
-    ("06:30", "Kospi closes -5.3%"),
+    ("05:30", "Taiwan closes -4.8%"),
+    ("06:00", "Nikkei closes -2.8%"),
+    ("06:30", "Kospi closes -6.2%"),
     ("13:30", "US GDP +4.3%, PCE +3.8%"),
 ]
 
@@ -343,8 +386,7 @@ def main():
                  "astronaut bound for Tiangong")
     lead_body = ("China launched Shenzhou-24 at 00:18 UTC carrying "
                  "Muhammad Zeeshan Ali, the first Pakistani in orbit "
-                 "and the first foreign astronaut aboard Tiangong. "
-                 "Docking followed at 11:56 CST.")
+                 "and the first foreign astronaut aboard Tiangong.")
     f_lead = font(SANS_B, 21)
     lines = wrap(d, lead_head, f_lead, 560)
     yy = ly
@@ -367,20 +409,20 @@ def main():
     bw, gap = 50, 16
     for i, (name, val) in enumerate(BARS):
         bx = cx + i * (bw + gap)
-        bar_h = int(abs(val) / 5.3 * 52)
+        bar_h = int(abs(val) / 6.2 * 52)
         d.rectangle([bx, cy + 68 - bar_h, bx + bw, cy + 68],
                     fill=(178, 52, 44))
         d.text((bx + bw / 2, cy + 72), name,
                font=font(SANS, 11), fill=INK, anchor="ma")
         d.text((bx + bw / 2, cy + 86), f"{val}%",
                font=font(SANS_B, 12), fill=(178, 52, 44), anchor="ma")
-    d.line([(mx, 228), (W - mx, 228)], fill=LIGHT, width=1)
+    d.line([(mx, 214), (W - mx, 214)], fill=LIGHT, width=1)
 
     # ---- World map band ----
-    my = 236
+    my = 222
     d.text((mx, my), "THE DAY ON THE MAP",
            font=font(SANS_B, 12), fill=NAVY)
-    map_x, map_y, map_w, map_h = mx, my + 18, 992, 44
+    map_x, map_y, map_w, map_h = mx, my + 18, 992, 58
     d.rectangle([map_x, map_y, map_x + map_w, map_y + map_h],
                 fill=(238, 240, 244), outline=LIGHT, width=1)
     for poly in CONTINENTS:
@@ -465,11 +507,11 @@ def main():
     d.line([(mx, 972), (W - mx, 972)], fill=LIGHT, width=1)
     d.text((mx, 978),
            "✓ DATE CHECK: all 40 stories first reported Wed 25 Nov 2026  •  "
-           "● confirmed by 2+ wires  ○ single-source report  •  "
-           "Sources: Reuters, BBC, Destatis, PTI, Bernama, BusinessWorld",
+           "● every story confirmed by 2+ wires  •  "
+           "Sources: Reuters, BBC, Destatis, PTI, Bernama, BusinessWorld, AP, Ofgem",
            font=font(SANS, 9), fill=GREY)
     d.text((mx, 992),
-           "BY THE NUMBERS: Kospi −5.3%  •  GDP +4.3%  •  PCE +3.8%  •  "
+           "BY THE NUMBERS: Kospi −6.2%  •  GDP +4.3%  •  PCE +3.8%  •  "
            "$740m treaty  •  2,100 arrivals  •  €1.582tn budget  •  "
            "$3,544 gold",
            font=font(SANS_B, 9), fill=NAVY)

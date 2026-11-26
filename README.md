@@ -11,12 +11,14 @@ with a bar chart of the Asia-markets rout (Kospi −5.3%, Taiwan −5.1%,
 Nikkei −2.9%, MSCI Asia ex-Japan −2.3%).
 
 **v1 judged live 26 Nov 07:58 WITA: 946,582, rank 6,167/9,181** — far
-below the top-50 bar (987,130). **v2** answers the live board: 13 drawn
-scenes (was 4), a UTC timeline band (six verified moments), a how-sure
-layer (● confirmed by 2+ wires, ○ single-source, with a date-check
-stamp and a key-figures strip), and the two medium-confidence stories
-swapped for verified wire stories released after v1 was built (US Q3
-GDP +4.3% / Oct PCE +3.8%; UCL Wednesday: Lille 2–1 Bayern).
+below the top-50 bar (987,130). **v2 judged live 26 Nov 11:05 WITA:
+972,121, rank 3,030/11,247** — up +25,539, still below the bar
+(988,112). **v3** fixes a factual error (Kospi printed −5.3%, actual
+close −6.16%; Taiwan −4.8%, Nikkei −2.8%), upgrades the tariff story
+to the announced specifics, adds two top-title-grade stories (UK
+energy cap +26% to £2,166; West Java mine flood, 9 dead, 17 trapped),
+reaches 16 drawn scenes, and restores the map band. Fields 15 → 17
+(energy, disaster). Every story now confirmed by 2+ wires.
 
 ## Why this design wins (simulator, calibrated on real judged data)
 
@@ -67,6 +69,23 @@ v2 sim 979,982 (+33,400 over judged v1) — still 7,148 under the
 top-50 bar on conservative weights, so the dev score after submit
 decides whether another polish round is needed.
 
+## v3: the factual error and the missing stories (simulator_v3)
+
+v2 realized +25,539 vs its sim +33,400, so v3 weights carry a
+realization factor 0.7645. Anchor: v2 judged 972,121; bar 988,112.
+
+| iter | change | sim before | sim after | Δ | keep? |
+| --- | --- | --- | --- | --- | --- |
+| 1 | fact fix (Kospi −6.2%, Taiwan −4.8%, Nikkei −2.8%) + tariffs specific/confirmed + 2 salience stories (UK energy cap, West Java mine) | 972,121 | 982,824 | +10,703 | yes |
+| 2 | scenes 13 → 16 (+plug, +helmet, +chip) | 982,824 | 986,952 | +4,128 | yes |
+| 3 | map band 44 → 58 px (lead tightened) | 986,952 | 989,246 | +2,294 | yes |
+
+v3 sim 989,246 (+17,125 over judged v2) — above the bar on sim; the
+dev score after submit is the truth. The Kospi error: v1/v2 printed
+−5.3% from a morning wire; the Korea Exchange close was −6.16%
+(4,697.51, down 308.52). Taiwan closed −4.80% (38,195.43), Nikkei
+−2.78% (57,011.62), MSCI Asia Pacific −2.3%.
+
 ## The 40 stories (all first reported 25 Nov 2026)
 
 Lead — **East Asia · Space**: Shenzhou-24 launches with Pakistan's
@@ -87,8 +106,8 @@ to death for killing officer (Reuters); Iran rial slides to fresh
 record low vs dollar (Bonbast).
 
 Europe — Puigdemont to return to Spain on Dec 12 (Reuters); record
-2,100 migrants reach Canary Is. (Reuters); Bulgaria intercepts first
-migrant boat in months (Reuters); RAF moves jets to hangars over drone
+2,100 migrants reach Canary Is. (Reuters); UK energy bills to jump
+26% to £2,166 (Ofgem/Morningstar); RAF moves jets to hangars over drone
 threat (Reuters); Merz defends Ukraine aid, warns Russia escalates
 (Reuters); EU leaders to haggle over 1.582tn euro budget (Reuters);
 Germany's Q3 GDP growth cut to 0.1% (Destatis/Reuters); Odesa battles
@@ -98,9 +117,9 @@ Ukraine war (FT/Reuters); Italy rebukes Ukraine over Libya ship
 attacks (Reuters); Abrego Garcia arrives in Madrid after leaving US
 (CNN); Lille stun Bayern in Champions League (UEFA/Reuters).
 
-East Asia — Asian stocks tumble; Kospi −5.3% (Reuters); US
-tariff-probe findings due (Reuters, single source — marked ○);
-Huang return fuels US fight over chip access (Reuters).
+East Asia — Asian stocks tumble; Kospi −6.2% (Korea Exchange);
+Trump unveils new tariffs on 14 partners (Reuters); Huang return
+fuels US fight over chip access (Reuters).
 
 South Asia — Indian rupee hits eight-month high (PTI); Bangladesh
 tightens border ahead of Hasina return (PTI); Cabinet clears second
@@ -110,8 +129,8 @@ Oceania / SE Asia — Australia, Solomons sign security pact (Reuters);
 Australia apologises to LGBTQ veterans (Reuters); Indonesia rescues 72
 orangutans from wildfires (Bernama); Indonesia, Vietnam agree
 partnership plan (TV BRICS); Philippine bank signals gentler rate
-hikes (BusinessWorld); Thailand defers 20bn-baht retirement plan
-(Bernama).
+hikes (BusinessWorld); 9 dead, 17 trapped in West Java mine flood
+(AP).
 
 North America — Gold slips to $3,544 ahead of US inflation data
 (Reuters); Ben Stokes enters IPL 2027 auction (IANS); US economy
@@ -135,7 +154,7 @@ were dropped for the UCL Wednesday results and the US data.
 ## Entry
 
 `main.py` (stdlib only) validates `image.png` (1024×1024 PNG,
-186,361 bytes, sha256 6cf3af58dd27bf55c2978d0e54c67640f7a5f95bad1819cc22934f4b2dd15e81,
+188,344 bytes, sha256 e6114871d1cd9f68ba2804c2c9bf60e3c823fc28bd898c8be04ce018c371367c,
 under the 1 MiB limit) and copies it to
 `$MAKEFUN_OUTPUT_DIR/entry.png`, verifying the copy byte-for-byte.
 `draw_poster.py` renders the poster deterministically with Pillow.
